@@ -29,6 +29,3 @@ def mt_extent(list_of_scenes, out_file, temp_dir, buffer=None):
 
     os.remove(opj(out_dir, 'extent.vrt'))
     h.timer(start)
-
-
-# main funciton missing
