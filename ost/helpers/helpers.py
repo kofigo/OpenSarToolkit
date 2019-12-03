@@ -75,11 +75,11 @@ def gpt_path():
                 return gptfile
             else:
                 gptfile = None
-                
+
     # chek if we have an enviromenral variable that contains the path to gpt
     if not gptfile:
         gptfile = os.getenv('GPT_PATH')
-        
+
     if not gptfile:
         gptfile = input(' Please provide the full path to the SNAP'
                         ' gpt command line executable'
@@ -183,7 +183,7 @@ def run_command(command, logfile, elapsed=True):
 
     if elapsed:
         timer(currtime)
-        
+
     return process.returncode
 
 
@@ -192,8 +192,11 @@ def delete_dimap(dimap_prefix):
 
     '''
 
-    shutil.rmtree('{}.data'.format(dimap_prefix))
-    os.remove('{}.dim'.format(dimap_prefix))
+    if os.path.isdir('{}.data'.format(dimap_prefix)):
+        shutil.rmtree('{}.data'.format(dimap_prefix))
+
+    if os.path.isfile('{}.dim'.format(dimap_prefix)):
+        os.remove('{}.dim'.format(dimap_prefix))
 
 
 def delete_shapefile(shapefile):
@@ -308,13 +311,13 @@ def check_out_tiff(file, test_stats=True):
 
 
 def check_zipfile(filename):
-        
+
     try:
         zip_archive = zipfile.ZipFile(filename)
     except zipfile.BadZipFile as er:
         print('Error: {}'.format(er))
         return 1
-    
+
     try:
         zip_test = zip_archive.testzip()
     except:
@@ -322,7 +325,7 @@ def check_zipfile(filename):
         return 1
     else:
         return zip_test
-    
+
 def resolution_in_degree(latitude, meters):
     '''Convert resolution in meters to degree based on Latitude
 
@@ -337,17 +340,26 @@ def resolution_in_degree(latitude, meters):
     return (meters/r)*radians_to_degrees
 
 
-def test_ard_parameters(ard_parameter_dict):
+def create_exec(exec_file, command, args):
+
     
+
+    # write to file
+    with open(exec_file, 'a') as exe:
+        exe.write('{} {} \n'.format(command, args))
+
+
+def test_ard_parameters(ard_parameter_dict):
+
     # snap things
-    resampling = ['NEAREST_NEIGHBOUR', 'BILINEAR_INTERPOLATION', 
-                  'CUBIC_CONVOLUTION', 'BISINC_5_POINT_INTERPOLATION', 
-                  'BISINC_11_POINT_INTERPOLATION', 
+    resampling = ['NEAREST_NEIGHBOUR', 'BILINEAR_INTERPOLATION',
+                  'CUBIC_CONVOLUTION', 'BISINC_5_POINT_INTERPOLATION',
+                  'BISINC_11_POINT_INTERPOLATION',
                   'BISINC_21_POINT_INTERPOLATION', 'BICUBIC_INTERPOLATION']
     window_sizes = ['3x3', '5x5']
-    target_window_sizes = ['5x5', '7x7', '9x9', '11x11', '13x13', 
+    target_window_sizes = ['5x5', '7x7', '9x9', '11x11', '13x13',
                            '15x15', '17x17']
-    speckle_filters = ['None', 'Boxcar', 'Median', 'Frost', 'Gamma Map', 
+    speckle_filters = ['None', 'Boxcar', 'Median', 'Frost', 'Gamma Map',
                        'Lee', 'Refined Lee', 'Lee Sigma', 'IDAN']
     damping = range(0,100)
     pan_size = range(0,200)
@@ -355,13 +367,13 @@ def test_ard_parameters(ard_parameter_dict):
     filter_size_y = range(0,100)
     nr_of_looks = range(1,4)
     sigma = [0.5, 0.6, 0.7, 0.8, 0.9]
-    
+
     # ost things
     grd_types = ['CEOS', 'Earth Engine', 'OST Standard']
     slc_types = ['OST Standard','OST Plus', 'OST Minimal']
     product_types = ['RTC', 'GTCsigma', 'GTCgamma']
-    metrics = ['median', 'percentiles', 'harmonics', 
+    metrics = ['median', 'percentiles', 'harmonics',
                'avg', 'max', 'min', 'std', 'cov']
     datatypes = ['float32', 'uint8', 'uint16']
-    
+
     #    assert ard_parameter_dict['resolution']

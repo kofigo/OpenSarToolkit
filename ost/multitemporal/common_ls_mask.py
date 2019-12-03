@@ -20,12 +20,12 @@ def mt_layover(filelist, outfile, temp_dir, extent, update_extent=False):
     :param out_dir - directory where the output file will be stored
     :return path to the multi-temporal layover/shadow mask file generated
     '''
-    
+
     # get some info
     burst_dir = os.path.dirname(outfile)
     burst = os.path.basename(burst_dir)
     extent = opj(burst_dir, '{}.extent.shp'.format(burst))
-    
+
     # get the start time for Info on processing time
     start = time.time()
     # create path to out file
@@ -67,10 +67,12 @@ def mt_layover(filelist, outfile, temp_dir, extent, update_extent=False):
         print(' INFO: Calculating symetrical difference of extent and ls_mask')
         # polygonize the multi-temporal ls mask
         ras.polygonize_raster(outfile, '{}.shp'.format(outfile[:-4]))
-        
+
         # create file for masked extent
         extent_ls_masked = opj(burst_dir, '{}.extent.masked.shp'.format(burst))
-        
+
         # calculate difference between burst exntetn and ls mask, fr masked extent
         vec.difference(extent, '{}.shp'.format(outfile[:-4]), extent_ls_masked)
-                
+
+
+# main funciton missing

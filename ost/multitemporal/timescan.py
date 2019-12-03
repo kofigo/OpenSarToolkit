@@ -67,7 +67,7 @@ def difference_in_years(start, end):
 
 
 def deseasonalize(stack):
-    
+
     percentiles = np.percentile(stack, 95, axis=[1,2])
     deseasoned = np.subtract(percentiles[:,np.newaxis], stack.reshape(stack.shape[0], -1))
     return deseasoned.reshape(stack.shape)
@@ -145,11 +145,11 @@ def mt_metrics(stack, out_prefix, metrics, rescale_to_datatype=False,
                 harmonics = True
                 metrics.remove('harmonics')
                 metrics.extend(['amplitude', 'phase', 'residuals'])
-        
+
         if 'percentiles' in metrics:
             metrics.remove('percentiles')
             metrics.extend(['p95', 'p5'])
-            
+
         # get metadata
         meta = src.profile
 
@@ -169,20 +169,20 @@ def mt_metrics(stack, out_prefix, metrics, rescale_to_datatype=False,
                     'std': 0.00001, 'cov': 0.00001}
         maximums = {'avg': 5, 'max': 5, 'min': 5, 'std': 15, 'cov': 1}
 
-        
+
         if harmonics:
             # construct independent variables
             dates, sines, cosines = [], [], []
             two_pi = np.multiply(2, np.pi)
             for date in sorted(datelist):
-                
+
                 delta = difference_in_years(datetime.strptime('700101',"%y%m%d"), datetime.strptime(date,"%y%m%d"))
                 dates.append(delta)
                 sines.append(np.sin(np.multiply(two_pi, delta - 0.5)))
                 cosines.append(np.cos(np.multiply(two_pi, delta - 0.5)))
-            
+
             X = np.array([dates, cosines, sines])
-    
+
         # loop through blocks
         for _, window in src.block_windows(1):
 
@@ -217,27 +217,27 @@ def mt_metrics(stack, out_prefix, metrics, rescale_to_datatype=False,
             arr['cov'] = (np.nan_to_num(stats.variation(stack, axis=0,
                                                         nan_policy='omit'))
                           if 'cov' in metrics else False)
-            
+
             if harmonics:
-                
+
                 stack_size = (stack.shape[1], stack.shape[2])
                 if to_power is True:
                     y = ras.convert_to_db(stack).reshape(stack.shape[0], -1)
                 else:
                     y = stack.reshape(stack.shape[0], -1)
-                    
+
                 x, residuals, _, _ = np.linalg.lstsq(X.T, y)
                 arr['amplitude'] = np.hypot(x[1], x[2]).reshape(stack_size)
                 arr['phase'] = np.arctan2(x[2], x[1]).reshape(stack_size)
                 arr['residuals'] = np.sqrt(np.divide(residuals, stack.shape[0])).reshape(stack_size)
-                
-                
+
+
             # the metrics to be re-turned to dB, in case to_power is True
             metrics_to_convert = ['avg', 'min', 'max', 'p95', 'p5', 'median']
 
             # do the back conversions and write to disk loop
             for metric in metrics:
-                
+
                 if to_power is True and metric in metrics_to_convert:
                     arr[metric] = ras.convert_to_db(arr[metric])
 
@@ -249,9 +249,9 @@ def mt_metrics(stack, out_prefix, metrics, rescale_to_datatype=False,
                 # write to dest
                 metric_dict[metric].write(
                     np.float32(arr[metric]), window=window, indexes=1)
-                metric_dict[metric].update_tags(1, 
+                metric_dict[metric].update_tags(1,
                     BAND_NAME='{}_{}'.format(os.path.basename(out_prefix), metric))
-                metric_dict[metric].set_band_description(1, 
+                metric_dict[metric].set_band_description(1,
                     '{}_{}'.format(os.path.basename(out_prefix), metric))
 
     # close the output files
@@ -266,14 +266,14 @@ def mt_metrics(stack, out_prefix, metrics, rescale_to_datatype=False,
             for metric in metrics:
                 filename = '{}.{}.tif'.format(out_prefix, metric)
                 os.remove(filename)
-            
+
             return return_code
-        
+
     if return_code == 0:
         dirname = os.path.dirname(out_prefix)
         check_file = opj(dirname, '.{}.processed'.format(os.path.basename(out_prefix)))
         with open(str(check_file), 'w') as file:
             file.write('passed all tests \n')
-    
-        
-        
+
+
+# main funtion on mt_metrics    

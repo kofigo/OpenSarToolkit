@@ -48,21 +48,52 @@ def create_stack(filelist, out_stack, logfile,
     return return_code
 
 
-def mt_speckle_filter(in_stack, out_stack, logfile):
+def mt_speckle_filter(in_stack, out_stack, logfile, speckle_dict):
     '''
     '''
 
     # get gpt file
     gpt_file = h.gpt_path()
 
-    # get path to graph
-    rootpath = importlib.util.find_spec('ost').submodule_search_locations[0]
-    graph = opj(rootpath, 'graphs', 'S1_TS', '2_MT_Speckle.xml')
+#    # get path to graph
+#    rootpath = importlib.util.find_spec('ost').submodule_search_locations[0]
+#    graph = opj(rootpath, 'graphs', 'S1_TS', '2_MT_Speckle.xml')
+#
+#    command = '{} {} -x -q {} -Pinput={} \
+#                   -Poutput={}'.format(gpt_file, graph, 2 * os.cpu_count(),
+#                                       in_stack, out_stack)
 
-    command = '{} {} -x -q {} -Pinput={} \
-                   -Poutput={}'.format(gpt_file, graph, 2 * os.cpu_count(),
-                                       in_stack, out_stack)
-
+    print(' INFO: Applying multi-temporal speckle filtering.')
+    # contrcut command string
+    command = ('{} Multi-Temporal-Speckle-Filter -x -q {}'
+                  ' -PestimateENL={}'
+                  ' -PanSize={}'
+                  ' -PdampingFactor={}'
+                  ' -Penl={}'
+                  ' -Pfilter={}'
+                  ' -PfilterSizeX={}'
+                  ' -PfilterSizeY={}'
+                  ' -PnumLooksStr={}'
+                  ' -PsigmaStr={}'
+                  ' -PtargetWindowSizeStr={}'
+                  ' -PwindowSize={}'
+                  '-t \'{}\' \'{}\''.format(
+                      gpt_file, 2 * os.cpu_count(),
+                      speckle_dict['estimate ENL'],
+                      speckle_dict['pan size'],
+                      speckle_dict['damping'],
+                      speckle_dict['ENL'],
+                      speckle_dict['filter'],
+                      speckle_dict['filter x size'],
+                      speckle_dict['filter y size'],
+                      speckle_dict['num of looks'],
+                      speckle_dict['sigma'],
+                      speckle_dict['target window size'],
+                      speckle_dict['window size'],
+                      out_stack, in_stack
+                      )
+    )
+                  
     return_code = h.run_command(command, logfile)
 
     if return_code == 0:
@@ -254,4 +285,54 @@ def ard_to_ts(list_of_files, processing_dir, temp_dir,
 
     # remove tmp files
     h.delete_dimap(out_stack)
-    
+
+
+if __name__ == "__main__":
+
+    import argparse
+
+    # write a description
+    descript = """
+               This is a command line client for the creation of
+               Sentinel-1 ARD data from Level 1 SLC bursts
+
+               to do
+               """
+
+    epilog = """
+             Example:
+             to do
+
+
+             """
+
+
+    # create a parser
+    parser = argparse.ArgumentParser(description=descript, epilog=epilog)
+
+    # search paramenters
+    parser.add_argument('-l', '--list_of_files',
+                        help=' (list) a python list of paths to all the dim'
+                        ' files to be stacked', required=True)
+    parser.add_argument('-d', '--processing_directory',
+                        help=' (str) The subswath of the master SLC',
+                        required=True)
+    parser.add_argument('-t', '--temp_directory',
+                        help='The directory where temporary files will'
+                             ' be written to.', required=True)
+    parser.add_argument('-b', '--burst_id',
+                        help='The OST burst id', required=True)
+    parser.add_argument('-p', '--proc_file',
+                        help=' (str/path) Path to ARD processing parameters file',
+                        required=True)
+    parser.add_argument('-pr', '--product',
+                        help=' (str) the OST product definition (e.g.'
+                        ' bs, coh or pol)',
+                        required=True)
+    parser.add_argument('-pol', '--polarisation',
+                        help=' (str) A string of comma-separated polarisations')
+
+    args = parser.parse_args()
+    ard_to_ts(args.list_of_files, args.processing_directory, 
+              args.temp_directory, args.burst_id, 
+              args.proc_file, args.product, args.polarisation)
